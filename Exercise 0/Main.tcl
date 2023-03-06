@@ -1,5 +1,14 @@
-#!tclsh
 
+#bs"d
+#   Course: Fundamentals of S/W Languages - 150060.5783
+#   Submitters: Yehuda Shani 23794253 & David Berger 341441053
+#   Exercise: 0
+#   Language: TCL
+#   Lecturer: Y. Barzilly
+
+
+
+#!tclsh
 
 proc handleBuyAndPrint {line fh} {
     #returns value added in this line, 
@@ -8,7 +17,7 @@ proc handleBuyAndPrint {line fh} {
    append PrintResult [lindex $line 1]
    append PrintResult " ###\n"
    set mult [expr { [lindex $line 2] * [lindex $line 3] }]
-   append PrintResult $mult
+   append PrintResult [format "%.2f" $mult]
    puts $PrintResult
    puts $fh $PrintResult
    return $mult
@@ -22,7 +31,7 @@ proc handleSellAndPrint {line fh} {
    append PrintResult [lindex $line 1]
    append PrintResult " $$$\n"
    set mult [expr { [lindex $line 2] * [lindex $line 3] }]
-   append PrintResult $mult
+   append PrintResult [format "%.2f" $mult]
    puts $PrintResult
    puts $fh $PrintResult
    return $mult
@@ -78,4 +87,5 @@ append endMsg \n
 puts $endMsg
 puts $output #endMsg
 close $output
+return;
 
