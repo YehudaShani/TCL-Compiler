@@ -29,8 +29,13 @@ proc handleSellAndPrint {line fh} {
 
 }
 
-#set path to folder, might need to this by getting input from user
-set inputPath "C:/TCL/Targil0/" ; #you might have to switch "\" to "/"
+
+set inputPath [lindex $argv 0]
+if {$inputPath == ""} {
+   puts "You didn't give any arguments! Pls send your input file path.."
+   return;
+}
+#example of inputPath: "C:/TCL/Targil0/" ; #you might have to switch "\" to "/"
 set outputPath "C:/TCL/Targil0/outputFolder/";
 
 #open file for writing
@@ -62,9 +67,15 @@ foreach file $files {
     puts $output "\n\n"
     close $fh
 }
-puts TotalBuys$totalBuy\n
-puts $output TotalBuys$totalBuy\n
-puts TotalSells$totalSell\n
-puts $output TotalSells$totalSell\n
+
+set endMsg "TotalBuys: "
+append endMsg $totalBuy
+append endMsg \n
+append endMsg "TotalSells: "
+append endMsg $totalSell
+append endMsg \n
+
+puts $endMsg
+puts $output #endMsg
 close $output
 
