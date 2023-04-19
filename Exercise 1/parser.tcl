@@ -1,8 +1,9 @@
 package require itcl
 
+# this class retrieves the different commands found in it's input File
 itcl::class parser {
-    public variable inputFile
-    public variable command
+    public variable inputFile ; # initialized by the ctor
+    public variable command ; # holds current command being processed
     variable commandType
 
     constructor {inputVm} {
@@ -10,20 +11,23 @@ itcl::class parser {
     }
 
     method hasMoreCommands { } {
+        # returns boolean value
         if {[eof $inputFile]} {
             return "false"
         } else {
             return "true"
         }  
-        return [eof $inputFile]
+        return [eof $inputFile] ; # QQ_Yehuda what is the point of this line? should we erase it?
     }
 
-    method advance { } {
+    method advance { } 
+        #updates "command" field to next line in input file
         set command [gets $inputFile]
         setCommandType
     }
 
     method setCommandType { } {
+        #updates "commandType" field according to the current command
         set commandName [lindex $command 0]
         if {$commandName == "push"} {
             set commandType "C_PUSH"
@@ -47,7 +51,8 @@ itcl::class parser {
         return $commandType
     }
 
-    method arg1 { } {
+#QQ_Yehuda when are these 2 methods used? arg1 and arg2 ?
+    method arg1 { } { 
         if {$commandType != "C_RETURN"} {
             return [lindex $command 0]
         }
