@@ -62,8 +62,9 @@ itcl::class codeWriter {
     }
 
     method writePushPop {command} {
-        set operation [lindex $command 0]
-        set segment [lindex $command 1]
+        #parse the given command into 3 parts. Example of a command: "push constant 10"
+        set operation [lindex $command 0] 
+        set segment [lindex $command 1] 
         set index [lindex $command 2]
 
         if {$operation eq "push"} {
@@ -75,7 +76,8 @@ itcl::class codeWriter {
                 puts $outputFile "M=D"
                 puts $outputFile "@SP"
                 puts $outputFile "M=M+1"
-            } elseif {$segment eq "local" || $segment eq "argument" || $segment eq "this" || $segment eq "that"} {
+            }
+            elseif {$segment eq "local" || $segment eq "argument" || $segment eq "this" || $segment eq "that"} {
                 if {$segment eq "local"} {
                     puts $outputFile "@LCL"
                 } elseif {$segment eq "argument"} {
@@ -94,7 +96,8 @@ itcl::class codeWriter {
                 puts $outputFile "M=D"
                 puts $outputFile "@SP"
                 puts $outputFile "M=M+1"
-            } elseif {$segment eq "temp"} {
+            }
+            elseif {$segment eq "temp"} {
                 puts $outputFile "@5"
                 puts $outputFile "D=A"
                 puts $outputFile "@$index"
@@ -105,7 +108,8 @@ itcl::class codeWriter {
                 puts $outputFile "M=D"
                 puts $outputFile "@SP"
                 puts $outputFile "M=M+1"
-            } elseif {$segment eq "pointer"} {
+            }
+            elseif {$segment eq "pointer"} {
                 if {$index eq "0"} {
                     puts $outputFile "@THIS"
                 } elseif {$index eq "1"} {
