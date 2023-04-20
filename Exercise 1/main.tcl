@@ -21,3 +21,5 @@ while {[pars hasMoreCommands]} {
     }
 }
 
+pars destroy
+
