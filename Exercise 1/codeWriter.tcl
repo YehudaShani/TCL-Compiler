@@ -11,7 +11,7 @@ itcl::class codeWriter {
         set operation [lindex $command 0]
         if {$operation eq "add" || $operation eq "sub" || $operation eq "and" || $operation eq "or" } {
             puts $outputFile "@SP"
-            puts $outputFile "AM=M-1"
+            puts $outputFile "AM=M-1" ;
             puts $outputFile "D=M"
             puts $outputFile "A=A-1"
             if {$operation eq "add"} {
@@ -144,7 +144,7 @@ itcl::class codeWriter {
                 puts $outputFile "D=M"
                 puts $outputFile "@$index"
                 puts $outputFile "D=D+A"
-                puts $outputFile "@R13"
+                puts $outputFile "@R13" fw ;
                 puts $outputFile "M=D"
                 puts $outputFile "@SP"
                 puts $outputFile "AM=M-1"

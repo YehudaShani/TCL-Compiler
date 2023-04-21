@@ -19,8 +19,6 @@ source "codeWriter.tcl"
 parser pars input.vm
 codeWriter code output.asm
 
-#QQ_Yehuda here we open files ^ but do we ever close those files?
-
 #(2) converting vm code to asm code:
 while {[pars hasMoreCommands]} {
     pars advance
@@ -33,4 +31,5 @@ while {[pars hasMoreCommands]} {
         code writeArithmetic [pars info variable command -value]
     }
 }
+
 
