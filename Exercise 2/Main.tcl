@@ -1,13 +1,9 @@
 #   bs"d
 #   Course: Fundamentals of S/W Languages - 150060.5783
 #   Submitters: Yehuda Shani 23794253 & David Berger 341441053
-#   Exercise: 1
+#   Exercise: 2
 #   Language: TCL
 #   Lecturer: Y. Barzilly
-
-# This is the main part of the program, it will open the input and output files, call the parser
-# and code writer
-
 
 package require itcl
 
@@ -29,9 +25,11 @@ while {[pars hasMoreCommands]} {
         code writePushPop [pars info variable command -value]
     } elseif {$operation eq "C_ARITHMETIC"} {
         code writeArithmetic [pars info variable command -value]
-    }
+    } elseif {$operation eq "C_LABEL"} {
+        code writeLabel [pars info variable command -value]
+    } elseif {$operation eq "C_GOTO"} {
+        code writeGoTo [pars info variable command -value]
+    } elseif {$operation eq "C_IF"} {
+        code writeIfGoTo [pars info variable command -value]
+    } 
 }
-
-pars destroy
-
-
