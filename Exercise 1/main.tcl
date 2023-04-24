@@ -24,14 +24,15 @@ while {[pars hasMoreCommands]} {
     pars advance
     #set local variable "operation" to the value of the "commandType" field from the parser object
     set operation [pars info variable commandType -value]
-    
+    set line [pars info variable command -value]
+
     if {$operation eq "C_PUSH" || $operation eq "C_POP"} {
-        code writePushPop [pars info variable command -value]
+        code writePushPop $line input.vm
     } elseif {$operation eq "C_ARITHMETIC"} {
-        code writeArithmetic [pars info variable command -value]
+        code writeArithmetic $line
     }
 }
 
-pars destroy
 
+#(3) closing files:
 

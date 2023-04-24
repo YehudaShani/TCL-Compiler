@@ -10,6 +10,10 @@ itcl::class parser {
         set inputFile [open $inputVm r]
     }
 
+    method close { } {
+        close $inputFile
+    }
+
     method hasMoreCommands { } {
         # returns boolean value
         if {[eof $inputFile]} {
