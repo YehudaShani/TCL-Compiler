@@ -34,5 +34,5 @@ while {[pars hasMoreCommands]} {
 }
 
 
-#(3) closing files:
+#(3) closing all files:
 
