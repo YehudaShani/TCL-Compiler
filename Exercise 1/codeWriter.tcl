@@ -8,7 +8,9 @@ itcl::class codeWriter {
         set outputFile [open $fileName w]
     }
 
-
+    method closeFile { } {
+        close $outputFile
+    }
 
     method writeArithmetic {command} {
         variable labelCounter

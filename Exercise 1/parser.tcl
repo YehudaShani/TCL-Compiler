@@ -10,7 +10,7 @@ itcl::class parser {
         set inputFile [open $inputVm r]
     }
 
-    method close { } {
+    method closeFile { } {
         close $inputFile
     }
 
