@@ -16,8 +16,8 @@ source "parser.tcl"
 source "codeWriter.tcl"
 
 #(1) initializes instances of our helper classes:
-parser pars BasicLoop.vm
-codeWriter code BasicLoop.asm
+parser pars input.vm
+codeWriter code output.asm
 
 #(2) converting vm code to asm code:
 while {[pars hasMoreCommands]} {
@@ -31,11 +31,11 @@ while {[pars hasMoreCommands]} {
     } elseif {$operation eq "C_ARITHMETIC"} {
         code writeArithmetic $line
     } elseif {$operation eq "C_LABEL"} {
-        code writeLabel [pars info variable command -value]
+        code writeLabel $line
     } elseif {$operation eq "C_GOTO"} {
-        code writeGoTo [pars info variable command -value]
+        code writeGoTo $line
     } elseif {$operation eq "C_IF"} {
-        code writeIfGoTo [pars info variable command -value]
+        code writeIfGoTo $line
     }
 }
 
