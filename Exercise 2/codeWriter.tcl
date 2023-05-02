@@ -208,22 +208,24 @@ itcl::class codeWriter {
         }
     }
     
-    method writeLabel {command} {
-        set newLabel [lindex $command 1]
-        puts $outputFile "($outputFileName.$newLabel)"
+    method writeLabel {functionName} {
+            
+        puts $outputFile "($outputFileName.$functionName)"
     }
-    method writeGoTo {command} {
-        set newLabel [lindex $command 1]
-        puts $outputFile "@$outputFileName.$newLabel"
+
+    method writeGoTo {functionName} {
+        puts $outputFile "\n//goto function"
+        puts $outputFile "@$outputFileName.$functionName"
         puts $outputFile "0; JMP"
     }
+
     method writeIfGoTo {command} {
         #set op number++
         variable labelCounter
         set labelCounter [expr $labelCounter + 1]
 
         set newLabel [lindex $command 1]
-        puts $outputFile "//if-goto $newLabel"
+        puts $outputFile "\n//if-goto $newLabel"
         puts $outputFile "@SP"
         puts $outputFile "M=M-1"
         puts $outputFile "A=M"
@@ -233,6 +235,70 @@ itcl::class codeWriter {
         puts $outputFile "@$newLabel"
         puts $outputFile "0;JMP"
         puts $outputFile "(if-goto-false-$outputFileName.$labelCounter)"
+
+    }
+
+    method call {command} {
+        variable labelCounter
+        set labelCounter [expr $labelCounter + 1]
+
+        #set call variables
+        set functionName [lindex $command 1]
+        set numArgs [lindex $command 2]
+
+        #save return address and push it, so that after we execute the code we will now where to return 
+        set returnAddress "Return-Address-$functionName-$labelCounter"
+        puts $outputFile "@$returnAddress"
+        puts $outputFile "D=A"
+        puts $outputFile "@SP"
+        puts $outputFile "A=M"
+        puts $outputFile "M=D"
+        puts $outputFile "@SP"
+        puts $outputFile "M=M+1"
+
+
+        #push LCL, ARG, THIS, THAT, of caller so that the calee can use them for himself
+        set pointers ["LCL" "ARG" "THIS" "THAT"]
+        foreach pointer $pointers {
+            pushPointer $pointer
+        }
+
+        #ARG = SP - n - 5, so that the callee can use the arguments the caller passed him
+        puts $outputFile "\n//ARG = SP - n - 5"
+        puts $outputFile "@SP"
+        puts $outputFile "D=M"
+        puts $outputFile "@$numArgs"
+        puts $outputFile "D=D-A"
+        puts $outputFile "@5"
+        puts $outputFile "D=D-A"
+        puts $outputFile "@ARG"
+        puts $outputFile "M=D"
+
+        #LCL = SP, so that the callee can use the local variables he needs to 
+        puts $outputFile ""
+        puts $outputFile "//LCL = SP"
+        puts $outputFile "@SP"
+        puts $outputFile "D=M"
+        puts $outputFile "@LCL"
+        puts $outputFile "M=D"
+
+        #goto function
+        write GoTo $functionName
+        
+        #add return address label, so that we can return to this location after the function is done
+        puts $outputFile "\n//return address label"
+        writeLabel $returnAddress
+    }
+
+    # helper function to push pointers
+    method pushPointer {pointer} {
+        puts $outputFile "@$pointer"
+        puts $outputFile "D=M"
+        puts $outputFile "@SP"
+        puts $outputFile "A=M"
+        puts $outputFile "M=D"
+        puts $outputFile "@SP"
+        puts $outputFile "M=M+1"
 
     }
 
