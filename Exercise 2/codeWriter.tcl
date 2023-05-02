@@ -213,24 +213,27 @@ itcl::class codeWriter {
         puts $outputFile "($outputFileName.$newLabel)"
     }
     method writeGoTo {command} {
-        #increment the label counter so all labels are different
-        variable labelCounter
-        set labelCounter [expr $labelCounter + 1]
-
-        puts $outputFile "@$outputFileName.$labelCounter"
+        set newLabel [lindex $command 1]
+        puts $outputFile "@$outputFileName.$newLabel"
         puts $outputFile "0; JMP"
     }
     method writeIfGoTo {command} {
+        #set op number++
         variable labelCounter
         set labelCounter [expr $labelCounter + 1]
 
         set newLabel [lindex $command 1]
+        puts $outputFile "//if-goto $newLabel"
         puts $outputFile "@SP"
         puts $outputFile "M=M-1"
         puts $outputFile "A=M"
         puts $outputFile "D=M"
-        puts $outputFile "@$outputFileName.$labelCounter"
-        puts $outputFile "D;JNE"
+        puts $outputFile "@if-goto-false-$outputFileName.$labelCounter"
+        puts $outputFile "D;JEQ"
+        puts $outputFile "@$newLabel"
+        puts $outputFile "0;JMP"
+        puts $outputFile "(if-goto-false-$outputFileName.$labelCounter)"
+
     }
 
     
