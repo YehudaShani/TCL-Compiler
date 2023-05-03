@@ -210,12 +210,12 @@ itcl::class codeWriter {
     
     method writeLabel {functionName} {
             
-        puts $outputFile "($outputFileName.$functionName)"
+        puts $outputFile "($functionName)"
     }
 
     method writeGoTo {functionName} {
         puts $outputFile "\n//goto function"
-        puts $outputFile "@$outputFileName.$functionName"
+        puts $outputFile "@$functionName"
         puts $outputFile "0; JMP"
     }
 
@@ -230,11 +230,11 @@ itcl::class codeWriter {
         puts $outputFile "M=M-1"
         puts $outputFile "A=M"
         puts $outputFile "D=M"
-        puts $outputFile "@if-goto-false-$outputFileName.$labelCounter"
+        puts $outputFile "@if-goto-false-$labelCounter"
         puts $outputFile "D;JEQ"
         puts $outputFile "@$newLabel"
         puts $outputFile "0;JMP"
-        puts $outputFile "(if-goto-false-$outputFileName.$labelCounter)"
+        puts $outputFile "(if-goto-false-$labelCounter)"
 
     }
 
@@ -287,7 +287,7 @@ itcl::class codeWriter {
         
         #add return address label, so that we can return to this location after the function is done
         puts $outputFile "\n//return address label"
-        writeLabel $returnAddress
+        puts $outputFile "($returnAddress)"
     }
 
     # helper function to push pointers
