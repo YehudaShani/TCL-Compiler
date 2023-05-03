@@ -2,12 +2,17 @@ package require itcl
 
 itcl::class codeWriter {
     variable outputFile ; # file handler..
-    variable outputFileName ; # actual name, used to write labels
+    variable inputFileName ; # actual name, used to write labels
     variable labelCounter 0
 
     constructor {fileName} {
-        set outputFileName $fileName
-        set outputFile [open $fileName w]
+        set inputFileName $fileName
+        set outputFile [open output.asm w]
+        bootstrap
+    }
+
+    method setFile {fileName} {
+        set inputFileName $fileName
     }
 
     method closeFile { } {
@@ -209,13 +214,14 @@ itcl::class codeWriter {
     }
     
     method writeLabel {functionName} {
-            
-        puts $outputFile "($functionName)"
+        variable inputFileName
+        puts $outputFile "($inputFileName.$functionName)"
     }
 
     method writeGoTo {functionName} {
+        variable inputFileName
         puts $outputFile "\n//goto function"
-        puts $outputFile "@$functionName"
+        puts $outputFile "@$inputFileName.$functionName"
         puts $outputFile "0; JMP"
     }
 
@@ -238,7 +244,8 @@ itcl::class codeWriter {
 
     }
 
-    method call {command} {
+    method writeCall {command} {
+        variable inputFileName
         variable labelCounter
         set labelCounter [expr $labelCounter + 1]
 
@@ -247,7 +254,7 @@ itcl::class codeWriter {
         set numArgs [lindex $command 2]
 
         #save return address and push it, so that after we execute the code we will now where to return 
-        set returnAddress "Return-Address-$functionName-$labelCounter"
+        set returnAddress "Return-Address-$inputFileName.$functionName-$labelCounter"
         puts $outputFile "@$returnAddress"
         puts $outputFile "D=A"
         puts $outputFile "@SP"
@@ -258,7 +265,7 @@ itcl::class codeWriter {
 
 
         #push LCL, ARG, THIS, THAT, of caller so that the calee can use them for himself
-        set pointers ["LCL" "ARG" "THIS" "THAT"]
+        set pointers {"LCL" "ARG" "THIS" "THAT"}
         foreach pointer $pointers {
             pushPointer $pointer
         }
@@ -283,7 +290,7 @@ itcl::class codeWriter {
         puts $outputFile "M=D"
 
         #goto function
-        write GoTo $functionName
+        writeGoTo $functionName
         
         #add return address label, so that we can return to this location after the function is done
         puts $outputFile "\n//return address label"
@@ -304,14 +311,15 @@ itcl::class codeWriter {
 
     }
 
-    method function {command} {
+    method writeFunction {command} {
         #set function variables
+        variable inputFileName
         set functionName [lindex $command 1]
         set numLocals [lindex $command 2]
 
         #add function label
         puts $outputFile "\n//function $functionName $numLocals"
-        puts $outputFile "($functionName)"
+        puts $outputFile "($$inputFileName.$functionName)"
 
         #add local variables
         for {set i 0} {$i < $numLocals} {incr i} {
@@ -319,7 +327,7 @@ itcl::class codeWriter {
         }
     }
 
-    method return { } {
+    method writeReturn { } {
         variable labelCounter
         set labelCounter [expr $labelCounter + 1]
         
@@ -377,7 +385,7 @@ itcl::class codeWriter {
         puts $outputFile "M=D"
         
         #ARG = *(FRAME-3)
-        puts $outputFile "\n//ARG = *(FRAME-3)"`
+        puts $outputFile "\n//ARG = *(FRAME-3)"
         puts $outputFile "@FRAME"
         puts $outputFile "D=M"
         puts $outputFile "@3"
@@ -401,12 +409,21 @@ itcl::class codeWriter {
         puts $outputFile "@RET"
         puts $outputFile "A=M"
         puts $outputFile "0;JMP"
+    }
 
+    method bootstrap { } {
+        #SP = 256
+        puts $outputFile "@256"
+        puts $outputFile "D=A"
+        puts $outputFile "@SP"
+        puts $outputFile "M=D"
 
+        #call Sys.init
+        puts $outputFile "\n//call Sys.init"
+        writeCall { "Sys.init" 0} 
     }
 
 
 
-    
     #end of class
 }

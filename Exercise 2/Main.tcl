@@ -16,29 +16,44 @@ source "parser.tcl"
 source "codeWriter.tcl"
 
 #(1) initializes instances of our helper classes:
-parser pars input.vm
+parser pars Main.vm
 codeWriter code output.asm
 
+# find all vm files
+set files [glob *.vm]
+
+
 #(2) converting vm code to asm code:
-while {[pars hasMoreCommands]} {
-    pars advance
-    #set local variable "operation" to the value of the "commandType" field from the parser object
-    set operation [pars info variable commandType -value]
-    set line [pars info variable command -value]
+foreach file $files {
+    #set the parser to the current file
+    pars setFile $file
+    #set the code writer to the current file
+    code setFile $file 
+    while {[pars hasMoreCommands]} {
+        pars advance
+        #set local variable "operation" to the value of the "commandType" field from the parser object
+        set operation [pars info variable commandType -value]
+        set line [pars info variable command -value]
 
-    if {$operation eq "C_PUSH" || $operation eq "C_POP"} {
-        code writePushPop $line input.vm
-    } elseif {$operation eq "C_ARITHMETIC"} {
-        code writeArithmetic $line
-    } elseif {$operation eq "C_LABEL"} {
-        code writeLabel $line
-    } elseif {$operation eq "C_GOTO"} {
-        code writeGoTo $line
-    } elseif {$operation eq "C_IF"} {
-        code writeIfGoTo $line
+        if {$operation eq "C_PUSH" || $operation eq "C_POP"} {
+            code writePushPop $line input.vm
+        } elseif {$operation eq "C_ARITHMETIC"} {
+            code writeArithmetic $line
+        } elseif {$operation eq "C_LABEL"} {
+            code writeLabel $line
+        } elseif {$operation eq "C_GOTO"} {
+            code writeGoTo $line
+        } elseif {$operation eq "C_IF"} {
+            code writeIfGoTo $line
+        } elseif {$operation eq "C_FUNCTION"} {
+            code writeFunction $line
+        } elseif {$operation eq "C_RETURN"} {
+            code writeReturn
+        } elseif {$operation eq "C_CALL"} {
+            code writeCall $line
+        } 
     }
+    pars closeFile
 }
-
-#(3) closing all files:
-pars closeFile
 code closeFile
+exit 0
