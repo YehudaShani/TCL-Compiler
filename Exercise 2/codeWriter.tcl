@@ -319,7 +319,93 @@ itcl::class codeWriter {
         }
     }
 
-    
+    method return { } {
+        variable labelCounter
+        set labelCounter [expr $labelCounter + 1]
+        
+        #Frame = LCL
+        puts $outputFile "\n//Frame = LCL"
+        puts $outputFile "@LCL"
+        puts $outputFile "D=M"
+        puts $outputFile "@FRAME"
+        puts $outputFile "M=D"
+
+        #RET = *(FRAME-5)
+        puts $outputFile "\n//RET = *(FRAME-5)"
+        puts $outputFile "@FRAME"
+        puts $outputFile "D=M"
+        puts $outputFile "@5"
+        puts $outputFile "A=D-A"
+        puts $outputFile "D=M"
+        puts $outputFile "@RET"
+        puts $outputFile "M=D"
+
+        #*ARG = pop()
+        puts $outputFile "\n//*ARG = pop()"
+        puts $outputFile "@SP"
+        puts $outputFile "AM=M-1"
+        puts $outputFile "D=M"
+        puts $outputFile "@ARG"
+        puts $outputFile "A=M"
+        puts $outputFile "M=D"
+
+        #SP = ARG + 1
+        puts $outputFile "\n//SP = ARG + 1"
+        puts $outputFile "@ARG"
+        puts $outputFile "D=M+1"
+        puts $outputFile "@SP"
+        puts $outputFile "M=D"
+
+        #THAT = *(FRAME-1)
+        puts $outputFile "\n//THAT = *(FRAME-1)"
+        puts $outputFile "@FRAME"
+        puts $outputFile "D=M"
+        puts $outputFile "@1"
+        puts $outputFile "A=D-A"
+        puts $outputFile "D=M"
+        puts $outputFile "@THAT"
+        puts $outputFile "M=D"
+
+        #THIS = *(FRAME-2)
+        puts $outputFile "\n//THIS = *(FRAME-2)"
+        puts $outputFile "@FRAME"
+        puts $outputFile "D=M"
+        puts $outputFile "@2"
+        puts $outputFile "A=D-A"
+        puts $outputFile "D=M"
+        puts $outputFile "@THIS"
+        puts $outputFile "M=D"
+        
+        #ARG = *(FRAME-3)
+        puts $outputFile "\n//ARG = *(FRAME-3)"`
+        puts $outputFile "@FRAME"
+        puts $outputFile "D=M"
+        puts $outputFile "@3"
+        puts $outputFile "A=D-A"
+        puts $outputFile "D=M"
+        puts $outputFile "@ARG"
+        puts $outputFile "M=D"
+
+        #LCL = *(FRAME-4)
+        puts $outputFile "\n//LCL = *(FRAME-4)"
+        puts $outputFile "@FRAME"
+        puts $outputFile "D=M"
+        puts $outputFile "@4"
+        puts $outputFile "A=D-A"
+        puts $outputFile "D=M"
+        puts $outputFile "@LCL"
+        puts $outputFile "M=D"
+
+        #goto RET
+        puts $outputFile "\n//goto RET"
+        puts $outputFile "@RET"
+        puts $outputFile "A=M"
+        puts $outputFile "0;JMP"
+
+
+    }
+
+
 
     
     #end of class
