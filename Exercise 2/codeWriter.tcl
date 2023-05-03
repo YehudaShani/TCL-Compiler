@@ -290,6 +290,8 @@ itcl::class codeWriter {
         puts $outputFile "($returnAddress)"
     }
 
+
+
     # helper function to push pointers
     method pushPointer {pointer} {
         puts $outputFile "@$pointer"
@@ -301,6 +303,23 @@ itcl::class codeWriter {
         puts $outputFile "M=M+1"
 
     }
+
+    method function {command} {
+        #set function variables
+        set functionName [lindex $command 1]
+        set numLocals [lindex $command 2]
+
+        #add function label
+        puts $outputFile "\n//function $functionName $numLocals"
+        puts $outputFile "($functionName)"
+
+        #add local variables
+        for {set i 0} {$i < $numLocals} {incr i} {
+            pushConstant 0
+        }
+    }
+
+    
 
     
     #end of class
