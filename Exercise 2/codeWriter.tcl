@@ -248,8 +248,8 @@ itcl::class codeWriter {
         set labelCounter [expr $labelCounter + 1]
 
         #set call variables
-        set functionName [lindex $command 0]
-        set numArgs [lindex $command 1]
+        set functionName [lindex $command 1]
+        set numArgs [lindex $command 2]
 
         #save return address and push it, so that after we execute the code we will know where to return 
         set returnAddress "Return-Address-$inputFileName.$functionName-$labelCounter"
