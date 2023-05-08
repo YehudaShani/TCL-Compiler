@@ -16,7 +16,7 @@ source "parser.tcl"
 source "codeWriter.tcl"
 
 #(1) initializes instances of our helper classes:
-parser pars Main.vm
+parser pars FibonacciSeries.vm
 codeWriter code output.asm
 
 # find all vm files
@@ -36,7 +36,7 @@ foreach file $files {
         set line [pars info variable command -value]
 
         if {$operation eq "C_PUSH" || $operation eq "C_POP"} {
-            code writePushPop $line input.vm
+            code writePushPop $line
         } elseif {$operation eq "C_ARITHMETIC"} {
             code writeArithmetic $line
         } elseif {$operation eq "C_LABEL"} {

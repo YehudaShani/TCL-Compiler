@@ -8,7 +8,7 @@ itcl::class codeWriter {
     constructor {fileName} {
         set inputFileName $fileName
         set outputFile [open output.asm w]
-        bootstrap
+        #bootstrap
     }
 
     method setFile {fileName} {
@@ -75,7 +75,7 @@ itcl::class codeWriter {
 
     }
 
-    method writePushPop {command fileName} {
+    method writePushPop {command} {
         #parse the given command into 3 parts. Example of a command: "push constant 10"
         set operation [lindex $command 0]
         set segment [lindex $command 1]
@@ -129,7 +129,7 @@ itcl::class codeWriter {
                 puts $outputFile "M=M+1"
 
             } elseif {$segment eq "static"} {
-                puts $outputFile "@$fileName.$index"
+                puts $outputFile "@$inputFileName.$index"
                 puts $outputFile "D=M"
                 puts $outputFile "@SP"
                 puts $outputFile "A=M"
@@ -196,7 +196,7 @@ itcl::class codeWriter {
                 puts $outputFile "@SP"
                 puts $outputFile "AM=M-1"
                 puts $outputFile "D=M"
-                puts $outputFile "@$fileName.$index"
+                puts $outputFile "@$inputFileName.$index"
                 puts $outputFile "M=D"
 
             } elseif {$segment eq "pointer"} {
@@ -213,14 +213,16 @@ itcl::class codeWriter {
         }
     }
     
-    method writeLabel {functionName} {
+    method writeLabel {command} {
         variable inputFileName
+        variable functionName [lindex $command 1]
         puts $outputFile "($functionName)"
     }
 
-    method writeGoTo {functionName} {
+    method writeGoTo {command} {
         variable inputFileName
-        puts $outputFile "@$functionName"
+        variable labelName [lindex $command 1]
+        puts $outputFile "@$labelName"
         puts $outputFile "0; JMP"
     }
 
@@ -286,7 +288,7 @@ itcl::class codeWriter {
         puts $outputFile "M=D"
 
         #goto function
-        writeGoTo $functionName
+        writeGoTo $command
         
         #add return address label, so that we can return to this location after the function is done
         puts $outputFile "($returnAddress)"
@@ -317,7 +319,7 @@ itcl::class codeWriter {
 
         #add local variables
         for {set i 0} {$i < $numLocals} {incr i} {
-            pushConstant 0
+            writePushPop "push constant 0"
         }
     }
 
@@ -392,7 +394,7 @@ itcl::class codeWriter {
         puts $outputFile "M=D"
 
         #call Sys.init
-        writeCall {"Sys.init" 0} 
+        writeCall "call Sys.init 0"
     }
 
 
