@@ -8,7 +8,7 @@ itcl::class codeWriter {
     constructor {fileName} {
         set inputFileName $fileName
         set outputFile [open output.asm w]
-        #bootstrap
+        bootstrap
     }
 
     method setFile {fileName} {
