@@ -54,6 +54,11 @@ itcl::class parser {
         return $commandType
     }
 
+    method setFile {inputVm} { 
+        #sets the input file to the given file
+        set inputFile [open $inputVm r]
+    }
+
     
     method arg1 { } { 
         if {$commandType != "C_RETURN"} {

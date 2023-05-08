@@ -2,12 +2,17 @@ package require itcl
 
 itcl::class codeWriter {
     variable outputFile ; # file handler..
-    variable outputFileName ; # actual name, used to write labels
+    variable inputFileName ; # actual name, used to write labels
     variable labelCounter 0
 
     constructor {fileName} {
-        set outputFileName $fileName
-        set outputFile [open $fileName w]
+        set inputFileName $fileName
+        set outputFile [open output.asm w]
+        bootstrap
+    }
+
+    method setFile {fileName} {
+        set inputFileName $fileName
     }
 
     method closeFile { } {
@@ -70,7 +75,7 @@ itcl::class codeWriter {
 
     }
 
-    method writePushPop {command fileName} {
+    method writePushPop {command} {
         #parse the given command into 3 parts. Example of a command: "push constant 10"
         set operation [lindex $command 0]
         set segment [lindex $command 1]
@@ -124,7 +129,7 @@ itcl::class codeWriter {
                 puts $outputFile "M=M+1"
 
             } elseif {$segment eq "static"} {
-                puts $outputFile "@$fileName.$index"
+                puts $outputFile "@$inputFileName.$index"
                 puts $outputFile "D=M"
                 puts $outputFile "@SP"
                 puts $outputFile "A=M"
@@ -191,7 +196,7 @@ itcl::class codeWriter {
                 puts $outputFile "@SP"
                 puts $outputFile "AM=M-1"
                 puts $outputFile "D=M"
-                puts $outputFile "@$fileName.$index"
+                puts $outputFile "@$inputFileName.$index"
                 puts $outputFile "M=D"
 
             } elseif {$segment eq "pointer"} {
@@ -209,24 +214,190 @@ itcl::class codeWriter {
     }
     
     method writeLabel {command} {
-        set newLabel [lindex $command 1]
-        puts $outputFile "($outputFileName.$newLabel)"
+        variable inputFileName
+        variable functionName [lindex $command 1]
+        puts $outputFile "($functionName)"
     }
+
     method writeGoTo {command} {
-        set newLabel [lindex $command 1]
-        puts $outputFile "@$outputFileName.$newLabel"
+        variable inputFileName
+        variable labelName [lindex $command 1]
+        puts $outputFile "@$labelName"
         puts $outputFile "0; JMP"
     }
+
     method writeIfGoTo {command} {
+        #set op number++
+        variable labelCounter
+        set labelCounter [expr $labelCounter + 1]
+
         set newLabel [lindex $command 1]
         puts $outputFile "@SP"
         puts $outputFile "M=M-1"
         puts $outputFile "A=M"
         puts $outputFile "D=M"
-        puts $outputFile "@$outputFileName.$newLabel"
-        puts $outputFile "D;JNE"
+        puts $outputFile "@if-goto-false-$labelCounter"
+        puts $outputFile "D;JEQ"
+        puts $outputFile "@$newLabel"
+        puts $outputFile "0;JMP"
+        puts $outputFile "(if-goto-false-$labelCounter)"
+
     }
 
-    
+    method writeCall {command} {
+        variable inputFileName
+        variable labelCounter
+        set labelCounter [expr $labelCounter + 1]
+
+        #set call variables
+        set functionName [lindex $command 1]
+        set numArgs [lindex $command 2]
+
+        #save return address and push it, so that after we execute the code we will know where to return 
+        set returnAddress "Return-Address-$inputFileName.$functionName-$labelCounter"
+        puts $outputFile "@$returnAddress"
+        puts $outputFile "D=A"
+        puts $outputFile "@SP"
+        puts $outputFile "A=M"
+        puts $outputFile "M=D"
+        puts $outputFile "@SP"
+        puts $outputFile "M=M+1"
+
+
+        #push LCL, ARG, THIS, THAT, of caller so that the calee can use them for himself
+        set pointers {"LCL" "ARG" "THIS" "THAT"}
+        foreach pointer $pointers {
+            pushPointer $pointer
+        }
+
+        #ARG = SP - n - 5, so that the callee can use the arguments the caller passed him
+        
+        puts $outputFile "@SP"
+        puts $outputFile "D=M"
+        puts $outputFile "@$numArgs"
+        puts $outputFile "D=D-A"
+        puts $outputFile "@5"
+        puts $outputFile "D=D-A"
+        puts $outputFile "@ARG"
+        puts $outputFile "M=D"
+
+        #LCL = SP, so that the callee can use the local variables he needs to 
+        puts $outputFile "@SP"
+        puts $outputFile "D=M"
+        puts $outputFile "@LCL"
+        puts $outputFile "M=D"
+
+        #goto function
+        writeGoTo $command
+        
+        #add return address label, so that we can return to this location after the function is done
+        puts $outputFile "($returnAddress)"
+    }
+
+
+
+    # helper function to push pointers
+    method pushPointer {pointer} {
+        puts $outputFile "@$pointer"
+        puts $outputFile "D=M"
+        puts $outputFile "@SP"
+        puts $outputFile "A=M"
+        puts $outputFile "M=D"
+        puts $outputFile "@SP"
+        puts $outputFile "M=M+1"
+
+    }
+
+    method writeFunction {command} {
+        #set function variables
+        variable inputFileName
+        set functionName [lindex $command 1]
+        set numLocals [lindex $command 2]
+
+        #add function label
+        puts $outputFile "($functionName)"
+
+        #add local variables
+        for {set i 0} {$i < $numLocals} {incr i} {
+            writePushPop "push constant 0"
+        }
+    }
+
+    method writeReturn { } {
+        #FRAME = LCL
+        puts $outputFile "@LCL"
+        puts $outputFile "D=M"
+        puts $outputFile "@R13"
+        puts $outputFile "M=D"
+
+        #RET = *(FRAME-5)
+        puts $outputFile "@5"
+        puts $outputFile "A=D-A"
+        puts $outputFile "D=M"
+        puts $outputFile "@R14"
+        puts $outputFile "M=D"
+
+        #*ARG = pop()
+        puts $outputFile "@SP"
+        puts $outputFile "AM=M-1"
+        puts $outputFile "D=M"
+        puts $outputFile "@ARG"
+        puts $outputFile "A=M"
+        puts $outputFile "M=D"
+
+        #SP = ARG + 1
+        puts $outputFile "@ARG"
+        puts $outputFile "D=M+1"
+        puts $outputFile "@SP"
+        puts $outputFile "M=D"
+
+        #THAT = *(FRAME-1)
+        puts $outputFile "@R13"
+        puts $outputFile "AM=M-1"
+        puts $outputFile "D=M"
+        puts $outputFile "@THAT"
+        puts $outputFile "M=D"
+
+        #THIS = *(FRAME-2)
+        puts $outputFile "@R13"
+        puts $outputFile "AM=M-1"
+        puts $outputFile "D=M"
+        puts $outputFile "@THIS"
+        puts $outputFile "M=D"
+
+        #ARG = *(FRAME-3)
+        puts $outputFile "@R13"
+        puts $outputFile "AM=M-1"
+        puts $outputFile "D=M"
+        puts $outputFile "@ARG"
+        puts $outputFile "M=D"
+
+        #LCL = *(FRAME-4)
+        puts $outputFile "@R13"
+        puts $outputFile "AM=M-1"
+        puts $outputFile "D=M"
+        puts $outputFile "@LCL"
+        puts $outputFile "M=D"
+
+        #goto RET
+        puts $outputFile "@R14"
+        puts $outputFile "A=M"
+        puts $outputFile "0;JMP"
+        
+    }
+
+    method bootstrap { } {
+        #SP = 256
+        puts $outputFile "@256"
+        puts $outputFile "D=A"
+        puts $outputFile "@SP"
+        puts $outputFile "M=D"
+
+        #call Sys.init
+        writeCall "call Sys.init 0"
+    }
+
+
+
     #end of class
 }
