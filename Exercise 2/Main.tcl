@@ -16,7 +16,7 @@ source "parser.tcl"
 source "codeWriter.tcl"
 
 #(1) initializes instances of our helper classes:
-parser pars FibonacciSeries.vm
+parser pars 
 codeWriter code output.asm
 
 # find all vm files

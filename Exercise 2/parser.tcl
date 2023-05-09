@@ -6,8 +6,8 @@ itcl::class parser {
     public variable command ; # holds current command being processed
     variable commandType
 
-    constructor {inputVm} {
-        set inputFile [open $inputVm r]
+    constructor { } {
+        
     }
 
     method closeFile { } {
