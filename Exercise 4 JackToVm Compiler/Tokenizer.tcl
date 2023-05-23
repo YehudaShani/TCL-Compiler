@@ -54,30 +54,30 @@ itcl::class Tokenizer {
                         $myWriter writeTokenSymbol $char
                     }
 
-                    # (2) buffer = the rest of the word until white space, symbol, or closed quotation
-                    set buffer $char
-                    # set isOpenQuote 0
-                    # if {$char eq "\""} { set isOpenQuote 1}
-                    incr i
-                    set $char [string index $line $i]
+                    # # (2) buffer = the rest of the word until white space, symbol, or closed quotation
+                    # set buffer $char
+                    # # set isOpenQuote 0
+                    # # if {$char eq "\""} { set isOpenQuote 1}
+                    # incr i
+                    # set $char [string index $line $i]
                     
-                    while { ![isStringInList $char $lstWhiteSpace]
-                     && ![isStringInList $char $lstKeywords] } {
-                        # if {$char eq "\""} { set isOpenQuote [![expr $isOpenQuote]]}
-                        append buffer $char
-                        if { $i < [string length $line] } {
-                            incr i
-                        } else {
-                            break
-                        }
-                    }
-                    # (3) CHECK if keyword or integer constant
-                    if { [isStringInList $buffer $lstKeywords]} {
-                        $myWriter writeTokenKeyword $buffer
-                    } elseif {[checkStringWithRegex $buffer "^\d+$"]} {
-                        $myWriter writeTokenIntCons $buffer
-                    }
-                    # # else if {}
+                    # while { ![isStringInList $char $lstWhiteSpace]
+                    #  && ![isStringInList $char $lstKeywords] } {
+                    #     # if {$char eq "\""} { set isOpenQuote [![expr $isOpenQuote]]}
+                    #     append buffer $char
+                    #     if { $i < [string length $line] } {
+                    #         incr i
+                    #     } else {
+                    #         break
+                    #     }
+                    # }
+                    # # (3) CHECK if keyword or integer constant
+                    # if { [isStringInList $buffer $lstKeywords]} {
+                    #     $myWriter writeTokenKeyword $buffer
+                    # } elseif {[checkStringWithRegex $buffer "^\d+$"]} {
+                    #     $myWriter writeTokenIntCons $buffer
+                    # }
+                    # # # else if {}
                     
                     set buffer ""
                 }
