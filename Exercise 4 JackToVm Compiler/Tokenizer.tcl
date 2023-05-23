@@ -42,7 +42,7 @@ itcl::class Tokenizer {
         
         foreach line $linesWoutCmmnts {
 
-            puts $line
+            # puts $line
 
             for {set i 0} {$i < [string length $line]} {incr i} {
                 set char [string index $line $i]
@@ -61,7 +61,8 @@ itcl::class Tokenizer {
                     incr i
                     set char [string index $line $i]
                     
-                    while { ![isStringInList $char $lstWhiteSpace] } {
+                    while { ![isStringInList $char $lstWhiteSpace] 
+                    && ![isStringInList $char $lstSymbols]} {
                         # if {$char eq "\""} { set isOpenQuote [![expr $isOpenQuote]]}
                         append buffer $char
                         if { $i < [string length $line] } {
@@ -74,15 +75,16 @@ itcl::class Tokenizer {
                     # (3) CHECK if keyword or integer constant
                     if { [isStringInList $buffer $lstKeywords]} {
                         $myWriter writeTokenKeyword $buffer
-                    } elseif {[checkStringWithRegex $buffer "^\d+$"]} {
+                    } elseif {[isInteger $buffer]} {
                         # if integer constant
                         $myWriter writeTokenIntCons $buffer
                     }
+                    puts $buffer
                     # # # else if {}
                     
                     set buffer ""
                 }
-                puts $i ;# it is "f"!!??
+                
             }   
         }
     }
@@ -152,12 +154,29 @@ itcl::class Tokenizer {
             return 0
         }
     }    
-    method checkStringWithRegex {str pattern} {
-    if {[regexp $pattern $str]} {
-        return 1  ;# Match found
-    } else {
-        return 0  ;# No match
+
+
+    proc isInteger {str} {
+        if {[string is integer -strict $str]} {
+            return 1
+        } else {
+            return 0
+        }
     }
-}
+
+
+    # method log {msg} {
+    #     set caller [lindex [info level 1] 0]
+    #     puts [concat "\(func:" $caller "\)" $msg]
+    # }
+
+    # this method is untested! i think it's bad.. got from online
+    # method checkStringWithRegex {str pattern} {
+    #     if {[regexp $pattern $str]} {
+    #         return 1  ;# Match found
+    #     } else {
+    #         return 0  ;# No match
+    #     }
+    # }
 }
     
