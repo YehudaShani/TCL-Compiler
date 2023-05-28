@@ -52,10 +52,12 @@ itcl::class Tokenizer {
                     # (1) check if Symbol:
                     if {[isStringInList $char $lstSymbols]} {
                         $myWriter writeTokenSymbol $char
+                        continue
                     }
 
                     # (2) buffer = the rest of the word until white space, symbol, or closed quotation
-                    set buffer $char
+                    # set buffer ""
+                    set buffer $char ; # resets buffer
                     # set isOpenQuote 0
                     # if {$char eq "\""} { set isOpenQuote 1}
                     incr i
@@ -72,17 +74,20 @@ itcl::class Tokenizer {
                             break ;#breaks from this local while
                         }
                     }
-                    # (3) CHECK if keyword or integer constant
+
+                    incr i -1
+
+                    # (3) CHECK if keyword, int constant, or identifier
                     if { [isStringInList $buffer $lstKeywords]} {
                         $myWriter writeTokenKeyword $buffer
                     } elseif {[isInteger $buffer]} {
-                        # if integer constant
                         $myWriter writeTokenIntCons $buffer
+                    } elseif {[isIdentifer $buffer]} {
+                        $myWriter writeTokenIden $buffer
                     }
-                    puts $buffer
-                    # # # else if {}
+                    puts [concat "buffer:" $buffer]
                     
-                    set buffer ""
+                    
                 }
                 
             }   
@@ -104,17 +109,18 @@ itcl::class Tokenizer {
             for {set i 0} {$i < [string length $line]} {incr i} {
                 if { $inLineComment } {
                     set inLineComment 0
-                    break; #ignore any characters after the "//"..
+                    break; #breaks from for loop, ignore any characters after the "//"..
                 }
                 set char [string index $line $i]
                 if {$inOpenComment} {
                     # we are in btw /* */
                     if { $char eq "*"} {
                         incr i
-                        if { $char eq "/"} {
+                        if { [string index $line $i] eq "/"} {
                             set inOpenComment 0
+                            continue
                         }
-                        continue
+                        incr i -1
                     }
                 } else {
                     # detect a beginning of a comment
@@ -156,14 +162,22 @@ itcl::class Tokenizer {
     }    
 
 
-    proc isInteger {str} {
+    method isInteger {str} {
         if {[string is integer -strict $str]} {
             return 1
         } else {
             return 0
         }
     }
-
+    method isIdentifer {str} {
+        if {[isInteger [string index $str 0]]} {
+            return 0
+        } elseif {[string is alnum $str]} {
+            return 1
+        } else {
+            return 0
+        }
+    }
 
     # method log {msg} {
     #     set caller [lindex [info level 1] 0]
