@@ -11,7 +11,23 @@ itcl::class XMLWriter {
         set outputFile [open $fileName w]
     }
     method writeTokenSymbol {symbol} {
-        puts $outputFile [concat "<symbol>" $symbol "</symbol>"]
+        set symbolToWrite $symbol
+        switch $symbol {
+            "<" {
+                set symbolToWrite "\&lt"
+            }
+            ">" {
+                set symbolToWrite "\&gt"
+            }
+            "\"" {
+                set symbolToWrite "\&quot"
+            }
+            "\&" {
+                set symbolToWrite "\&amp"
+            }
+        }
+        
+        puts $outputFile [concat "<symbol>" $symbolToWrite "</symbol>"]
         # puts  [concat "writing: " "<symbol>" $symbol "</symbol>"]
     }
     method writeTokenKeyword {keyword} {
