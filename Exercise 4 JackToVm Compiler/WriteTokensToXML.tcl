@@ -1,16 +1,4 @@
-
-
-package require itcl
-
-itcl::class XMLWriter {
-    variable outputFileName;
-    variable outputFile ; # file handler..
-
-    method setOutputFile {fileName} {
-        set outputFileName $fileName
-        set outputFile [open $fileName w]
-    }
-    method writeTokenSymbol {symbol} {
+} {
         set symbolToWrite $symbol
         switch $symbol {
             "<" {
@@ -42,7 +30,7 @@ itcl::class XMLWriter {
         puts $outputFile [concat "<stringConstant>" $str "</stringConstant>"]
     }
     method writeTokenIden {iden} {
-        puts $outputFile [concat "<identifier>" $iden "<identifier\>"]
+        puts $outputFile [concat "<identifier>" $iden "</identifier\>"]
     }
     
 
@@ -52,6 +40,7 @@ itcl::class XMLWriter {
     # }
     
     method closeFile { } {
+        puts $outputFile "</tokens>"
         close $outputFile
     }
     
