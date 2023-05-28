@@ -14,16 +14,16 @@ itcl::class XMLWriter {
         set symbolToWrite $symbol
         switch $symbol {
             "<" {
-                set symbolToWrite "\&lt"
+                set symbolToWrite "\&lt;"
             }
             ">" {
-                set symbolToWrite "\&gt"
+                set symbolToWrite "\&gt;"
             }
             "\"" {
-                set symbolToWrite "\&quot"
+                set symbolToWrite "\&quot;"
             }
             "\&" {
-                set symbolToWrite "\&amp"
+                set symbolToWrite "\&amp;"
             }
         }
         
