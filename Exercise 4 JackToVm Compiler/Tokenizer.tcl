@@ -92,6 +92,7 @@ itcl::class Tokenizer {
                 
             }   
         }
+        
     }
     
     method getListWoutCommentsCurrFile { } {
@@ -104,11 +105,13 @@ itcl::class Tokenizer {
             set buffer ""            
             set inOpenComment 0 ; # if true - we are in middle of a /* */ 
             set inLineComment 0; # if true - we break from the line totally
+            
 
-            puts [concat "reading: " $line "from " $nameOfCurrFile]
+            # puts [concat "reading: " $line "from " $nameOfCurrFile]
             for {set i 0} {$i < [string length $line]} {incr i} {
                 if { $inLineComment } {
                     set inLineComment 0
+                    puts [append "removing one-line comment:" $line]
                     break; #breaks from for loop, ignore any characters after the "//"..
                 }
                 set char [string index $line $i]
@@ -134,11 +137,13 @@ itcl::class Tokenizer {
                             # the line has "/*", then keep skipping till we find another "*/"
                             set inOpenComment 1
                             continue
+                        } else {
+                            incr i -1
                         }
-                    } else {
-                        # this is NOT a comment:
-                        append buffer $char
-                    }
+                    } 
+                    # this is NOT a comment:
+                    append buffer $char
+                    
                 }                
             }
             # (2) add the buffer to the final code:
@@ -149,8 +154,10 @@ itcl::class Tokenizer {
     }
    
     method closeCurrFile { } {
-        puts "closing file"
+        puts "closing input file"
         close $currFile
+        puts "closing output file"
+        $myWriter closeFile
     }
     
     method isStringInList {str listVar} {
