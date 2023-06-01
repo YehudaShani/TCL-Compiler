@@ -20,6 +20,13 @@ itcl::class TokenizerHelper {
         return $line
     }
 
+    method getLine { } {
+        set currentPosition [tell $fileReader]
+        set line [gets $fileReader]
+        seek $fileReader $currentPosition
+        return $line
+    }
+
     method tokenType { line } {
         # receives a line and returns the type of the line
         # returns: keyword, symbol, identifier, int_const, string_const
@@ -39,7 +46,6 @@ itcl::class TokenizerHelper {
         #save current position
         set currentPosition [tell $fileReader]
         set line [gets $fileReader]
-        puts $line
 
         set wordList [split $line " "]
         set firstWord [lindex $wordList 0]
@@ -49,8 +55,24 @@ itcl::class TokenizerHelper {
         seek $fileReader $currentPosition
 
         return $modifiedString
+    }
 
+    method nextToken { } {
+                # receives a line and returns the type of the line
+        # returns: keyword, symbol, identifier, int_const, string_const
+        variable fileReader
 
+        #save current position
+        set currentPosition [tell $fileReader]
+        set line [gets $fileReader]
+
+        set wordList [split $line " "]
+        set token [lindex $wordList 1]
+
+        #return to previous position
+        seek $fileReader $currentPosition
+
+        return $token
     }
 
     method hasMoreTokens {} {

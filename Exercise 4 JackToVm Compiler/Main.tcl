@@ -36,8 +36,8 @@ set xmlFiles [glob *.xml]
 
 
 #set the tokenizer to the current file
-comp setFileName "MainT.xml"
-comp printTokens 
+comp setFileName "SquareGame.jack"
+comp compile
 
 
 exit 0

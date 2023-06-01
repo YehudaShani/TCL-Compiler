@@ -41,6 +41,15 @@ itcl::class XMLWriter {
     method writeTokenIden {iden} {
         puts $outputFile [concat "<identifier>" $iden "</identifier\>"]
     }
+
+    # adding a new method to write a tag
+    method writeTag { tag } {
+        puts $outputFile [concat "<" $tag ">"]
+    }
+
+    method writeLine { line } {
+        puts $outputFile $line
+    }
     
     method closeFile { } {
         puts $outputFile "</tokens>"
