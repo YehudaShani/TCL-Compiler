@@ -31,22 +31,38 @@ itcl::class TokenizerHelper {
 
     }
 
-    method tokenType { line } {
+    method nextTokenType { } {
         # receives a line and returns the type of the line
         # returns: keyword, symbol, identifier, int_const, string_const
+        variable fileReader
+
+        #save current position
+        set currentPosition [tell $fileReader]
+        set line [gets $fileReader]
+        puts $line
 
         set wordList [split $line " "]
         set firstWord [lindex $wordList 0]
         set modifiedString [string range $firstWord 1 end-1]
+
+        #return to previous position
+        seek $fileReader $currentPosition
+
         return $modifiedString
+
 
     }
 
     method hasMoreTokens {} {
         #check if end of file
-        if {[eof $fileReader]} {
+        variable fileReader
+        set currentPosition [tell $fileReader]
+        set line [gets $fileReader]
+        seek $fileReader $currentPosition
+        if {$line == ""} {
             return 0
+        } else {
+            return 1
         }
-        return 1
     }
 }
