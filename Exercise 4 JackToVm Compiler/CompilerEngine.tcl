@@ -17,7 +17,7 @@ itcl::class CompilerEngine {
 
     method setFileName { _fileName } {
         set fileName $_fileName
-        set outputFileName [file rootname $fileName]2.xml
+        set outputFileName [file rootname $fileName].xml
         set outputFile [open $outputFileName w]
         $tokenizer setFile [file rootname $fileName]T.xml
     }
