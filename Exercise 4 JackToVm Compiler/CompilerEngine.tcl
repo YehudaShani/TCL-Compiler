@@ -42,10 +42,10 @@ itcl::class CompilerEngine {
 
     method eat { _token } {
         set realToken [$tokenizer nextToken]
-        puts "[$tokenizer getLine] "
         if { $realToken == $_token } {
             puts $outputFile [$tokenizer advance]
         } else {
+
             error "expected $_token, got $realToken"
         }
     }
@@ -80,7 +80,23 @@ itcl::class CompilerEngine {
         if { [ $tokenizer nextToken ] == $token1 || [ $tokenizer nextToken ] == $token2 || [ $tokenizer nextToken ] == $token3 } {
             puts $outputFile [$tokenizer advance]
         } else {
-            error "expected $token1 or $token2 or $token3, got [$tokenizer tokenType]"
+            error "expected $token1 or $token2 or $token3, got [$tokenizer nextTokenType]"
+        }
+    }
+
+    method eatUnaryOp { } {
+        if { [ $tokenizer nextToken ] == "-" || [ $tokenizer nextToken ] == "~" } {
+            puts $outputFile [$tokenizer advance]
+        } else {
+            error "expected unaryOp, got [$tokenizer nextTokenType]"
+        }
+    }
+
+    method eatOp { } {
+        if { [ $tokenizer nextToken ] == "+" || [ $tokenizer nextToken ] == "-" || [ $tokenizer nextToken ] == "*" || [ $tokenizer nextToken ] == "/" || [ $tokenizer nextToken ] == "\&amp;" || [ $tokenizer nextToken ] == "|" || [ $tokenizer nextToken ] == "\&lt;" || [ $tokenizer nextToken ] == "\&gt;" || [ $tokenizer nextToken ] == "=" } {
+            puts $outputFile [$tokenizer advance]
+        } else {
+            error "expected op, got [$tokenizer nextToken]"
         }
     }
 
@@ -182,6 +198,7 @@ itcl::class CompilerEngine {
     method compileSubroutineBody { } {
         #compile subroutine body, of the form: "{ varDec* statements }"
         puts $outputFile "<subroutineBody>"
+        puts "$outputFileName"
         eat "{"
         #compile varDec*
         while { [ $tokenizer nextToken ] == "var" } {
@@ -209,9 +226,9 @@ itcl::class CompilerEngine {
 
     method compileWhileStatement { } {
         # compile while statement, of the form: "while (expression) { statements }"
+        puts $outputFile "<whileStatement>"
         eat "while"
         eat "("
-        puts $outputFile "<whileStatement>"
 
 
         # compile expression
@@ -227,9 +244,9 @@ itcl::class CompilerEngine {
 
     method compileIfStatement { } {
         # compile if statement, of the form: "if (expression) { statements }"
+        puts $outputFile "<ifStatement>"
         eat "if"
         eat "("
-        puts $outputFile "<ifStatement>"
 
         # compile expression
         compileExpression
@@ -239,26 +256,23 @@ itcl::class CompilerEngine {
         compileStatements
         eat "}"
 
+        # compile else statement, of the form: "else { statements }"
+        if { [ $tokenizer nextToken ] == "else" } {
+            eat "else"
+            eat "{"
+            # compile statements
+            compileStatements
+            eat "}"
+        }
+
         puts $outputFile "</ifStatement>"
     }
 
 
-    method compileDoStatement { } {
-        # compile do statement, of the form: "do subroutineCall;"
-        eat "do"
-        puts $outputFile "<doStatement>"
-
-        # compile subroutineCall
-        compileSubroutineCall
-        eat ";"
-
-        puts $outputFile "</doStatement>"
-    }
-
     method compileLet { } {
         # compile let statement, of the form: "let varName ([ expression ])? = expression;"
-        eat "let"
         puts $outputFile "<letStatement>"
+        eat "let"
 
         # compile varName
         eatVarName
@@ -277,8 +291,9 @@ itcl::class CompilerEngine {
 
     method compileDo { } {
         # compile do statement, of the form: "do subroutineCall;"
-        eat "do"
         puts $outputFile "<doStatement>"
+        eat "do"
+
 
         # compile subroutineCall
         compileSubroutineCall
@@ -289,8 +304,8 @@ itcl::class CompilerEngine {
 
     method compileReturn { } {
         # compile return statement, of the form: "return expression?;"
-        eat "return"
         puts $outputFile "<returnStatement>"
+        eat "return"
 
         # compile expression?
         if { [ $tokenizer nextToken ] != ";" } {
@@ -302,12 +317,89 @@ itcl::class CompilerEngine {
     }
 
     method compileExpression { } {
-        #dummy operation
+        # compile expression, of the form: "term (op term)*"
         puts $outputFile "<expression>"
-        set line [$tokenizer advance]
-        puts $outputFile $line
+        compileTerm
+        set nextToken [ $tokenizer nextToken ]
+        puts "nextToken: $nextToken"
+        while { $nextToken == "+" || $nextToken == "-" || $nextToken == "*" || $nextToken == "/" || $nextToken == "\&amp;" || $nextToken == "|" || $nextToken == "\&lt;" || $nextToken == "\&gt;" || $nextToken == "=" } {
+            puts "nextToken: $nextToken"
+            eatOp
+            compileTerm
+            set nextToken [ $tokenizer nextToken ]
+        }
         puts $outputFile "</expression>"
+    }
 
+    method compileTerm { } {
+        # compile term, of the form: "integerConstant | stringConstant | keywordConstant | varName | varName[expression] | subroutineCall | (expression) | unaryOp term"
+        puts $outputFile "<term>"
+        set type [ $tokenizer nextTokenType ]
+        if { $type == "integerConstant" || $type == "stringConstant" || $type == "keywordConstant" } {
+            set line [$tokenizer advance]
+            puts $outputFile $line
+        } elseif { $type == "identifier" } {
+            eatVarName
+            if { [ $tokenizer nextToken ] == "\[" } {
+                eat "\["
+                compileExpression
+                eat "\]"
+            } elseif { [ $tokenizer nextToken ] == "." } {
+                eat "."
+                eatVarName
+                eat "("
+                compileExpressionList
+                eat ")"
+            } elseif { [ $tokenizer nextToken ] == "(" } {
+                eat "("
+                compileExpressionList
+                eat ")"
+            }
+        } elseif { $type == "symbol" } {
+            if { [ $tokenizer nextToken ] == "(" } {
+                eat "("
+                compileExpression
+                eat ")"
+            } else {
+                eatUnaryOp
+                compileTerm
+            }
+        } else {
+            ### might need to change this
+            puts $outputFile [$tokenizer advance]
+        }
+        puts $outputFile "</term>"
+    }
+
+    method compileSubroutineCall { } {
+        # compile subroutine call, of the form: "subroutineName (expressionList) | (className | varName).subroutineName (expressionList)"
+        #puts $outputFile "<subroutineCall>"
+
+        # compile subroutineName | (className | varName)
+        eatVarName
+        if { [ $tokenizer nextToken ] == "." } {
+            eat "."
+            eatVarName
+        }
+        eat "("
+        # compile expressionList
+        compileExpressionList
+        eat ")"
+
+        #puts $outputFile "</subroutineCall>"
+    }
+
+    method compileExpressionList { } {
+        # compile expression list, of the form: "(expression (, expression)*)?"
+        puts $outputFile "<expressionList>"
+        if { [ $tokenizer nextToken ] != ")" } {
+            compileExpression
+            while { [ $tokenizer nextToken ] == "," } {
+                eat ","
+                compileExpression
+            }
+        }
+        puts $outputFile "</expressionList>"
     }
 
 }

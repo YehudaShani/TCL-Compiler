@@ -24,20 +24,17 @@ set jackFiles [glob *.jack]
 
 #(2) iterate over files, convert Jack -> XML:
 foreach file $jackFiles {
-    #set the tokenizer to the current file
-    #tok setFile $file
-    #tok compileFileToXml 
-    #tok closeCurrFile
+    tok setFile $file
+    tok compileFileToXml 
+    tok closeCurrFile
+    comp setFileName $file
+    comp compile
 }
 
 set xmlFiles [glob *.xml]
 
 #(3) iterate over files, check grammer of files
 
-
-#set the tokenizer to the current file
-comp setFileName "SquareGame.jack"
-comp compile
 
 
 exit 0
