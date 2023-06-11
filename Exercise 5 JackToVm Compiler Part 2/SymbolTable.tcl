@@ -12,14 +12,21 @@ itcl::class SymbolTable {
    }
 
     method addSymbolWithName { _name } {
+        set existsAlready [getIndexOfSymbolByName $_name]
+        if { $existsAlready  >= 0} {
+            #if already exists..
+            return $existsAlready
+        }
         set res ""
         append res "|NAME: "
         append res $_name
         append res "|CATEGORY: |TYPE: |INDEX: |END"
         lappend symbolList $res
+        return [getIndexOfSymbolByName $_name]
     }
     
     method getIndexOfSymbolByName { _name } {
+        # use this to check if exists..
        for {set i 0} {$i < [ llength $symbolList ]} {incr i} {
             set symbol [lindex $symbolList $i]
             if {[string first $_name $symbol] != -1} {
