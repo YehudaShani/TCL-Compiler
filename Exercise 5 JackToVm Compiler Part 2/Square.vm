@@ -1,0 +1,184 @@
+try
+function Square.new 3
+push arg 1
+push arg 2
+push arg 3
+call draw 0
+function Square.dispose 0
+call Memory.deAlloc 1
+function Square.draw 0
+call Screen.setColor 1
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+function Square.erase 0
+call Screen.setColor 1
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+function Square.incSize 0
+push this 1
+push this 2
+add
+push constant 254
+lt
+push this 0
+push this 2
+add
+push constant 510
+lt
+and
+call erase 0
+push this 2
+push constant 2
+add
+call draw 0
+function Square.decSize 0
+push this 2
+push constant 2
+gt
+call erase 0
+push this 2
+push constant 2
+sub
+call draw 0
+function Square.moveUp 0
+push this 1
+push constant 1
+gt
+call Screen.setColor 1
+push this 0
+push this 1
+push this 2
+add
+push constant 1
+sub
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+push this 1
+push constant 2
+sub
+call Screen.setColor 1
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push constant 1
+add
+call Screen.drawRectangle 4
+function Square.moveDown 0
+push this 1
+push this 2
+add
+push constant 254
+lt
+call Screen.setColor 1
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push constant 1
+add
+call Screen.drawRectangle 4
+push this 1
+push constant 2
+add
+call Screen.setColor 1
+push this 0
+push this 1
+push this 2
+add
+push constant 1
+sub
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+function Square.moveLeft 0
+push this 0
+push constant 1
+gt
+call Screen.setColor 1
+push this 0
+push this 2
+add
+push constant 1
+sub
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+push this 0
+push constant 2
+sub
+call Screen.setColor 1
+push this 0
+push this 1
+push this 0
+push constant 1
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+function Square.moveRight 0
+push this 0
+push this 2
+add
+push constant 510
+lt
+call Screen.setColor 1
+push this 0
+push this 1
+push this 0
+push constant 1
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4
+push this 0
+push constant 2
+add
+call Screen.setColor 1
+push this 0
+push this 2
+add
+push constant 1
+sub
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Screen.drawRectangle 4

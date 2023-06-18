@@ -1,0 +1,65 @@
+try
+function SquareGame.new 0
+push constant 0
+push constant 0
+push constant 30
+push constant 0
+function SquareGame.dispose 0
+call square.dispose 0
+call Memory.deAlloc 1
+function SquareGame.moveSquare 0
+push this 1
+push constant 1
+eq
+call square.moveUp 0
+push this 1
+push constant 2
+eq
+call square.moveDown 0
+push this 1
+push constant 3
+eq
+call square.moveLeft 0
+push this 1
+push constant 4
+eq
+call square.moveRight 0
+push constant 5
+call Sys.wait 1
+function SquareGame.run 0
+push local 1
+push local 0
+push constant 0
+eq
+call moveSquare 0
+push local 0
+push constant 81
+eq
+push local 0
+push constant 90
+eq
+call square.decSize 0
+push local 0
+push constant 88
+eq
+call square.incSize 0
+push local 0
+push constant 131
+eq
+push constant 1
+push local 0
+push constant 133
+eq
+push constant 2
+push local 0
+push constant 130
+eq
+push constant 3
+push local 0
+push constant 132
+eq
+push constant 4
+push local 0
+push constant 0
+eq
+call moveSquare 0

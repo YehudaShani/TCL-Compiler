@@ -1,0 +1,18 @@
+try
+function Main.main 0
+call game.run 0
+call game.dispose 0
+function Main.more 0
+push constant string
+push constant 1
+push local 3
+push constant 2
+push local 0
+push local 1
+call Math.multiply 2
+push local 1
+push constant 2
+call Math.divide 
+push local 0
+push local 1
+or
