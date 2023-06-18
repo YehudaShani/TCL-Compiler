@@ -1,20 +1,41 @@
 package require itcl
 
 source "TokenizerHelper.tcl"
-source "WriteFinalXML.tcl"
 source "SymbolTable.tcl"
 source "SR_SymbolTable.tcl"
+source "VMWriter.tcl"
 
 itcl::class CompilerEngine2 {
     variable tokenizer
     variable fileName
     variable outputFileName
-    variable outputFile
+    # variable outputFile uses the vmWriter..
     variable st 
-    variable st_sr ;# for subroutine
+    variable st_sr ;# for subroutine symbol Table
     # repsonse codes:
     variable RES_NOT_FOUND 1
     variable RES_FOUND 0
+
+    # Segments - Define the enumeration values
+    set CONSTANT 0
+    set ARGUMENT 1
+    set LOCAL 2
+    set STATIC 3
+    set THIS 4
+    set THAT 5
+    set POINTER 6
+    set TEMP 7
+
+    # Commands - Define the enumeration values
+    set ADD 0
+    set SUB 1
+    set NEG 2
+    set EQ 3
+    set GT 4
+    set LT 5
+    set AND 6
+    set OR 7
+    set NOT 8
 
     constructor {  } {
         set tokenizer [TokenizerHelper TokenizerHelper::new]
@@ -22,15 +43,16 @@ itcl::class CompilerEngine2 {
         set st_sr [SR_SymbolTable SR_SymbolTable::new]
     }
 
-
-
     method setFileName { _fileName } {
         set fileName $_fileName
-        set outputFileName [file rootname $fileName].xml
-        set outputFile [open $outputFileName w]
         $tokenizer setFile [file rootname $fileName]T.xml
+        set outputFileName [file rootname $fileName].vm
+        # set outputFileName [file rootname $fileName].xml
+        # set outputFile [open $outputFileName w]
         $st reset
+        set vmWriter [VMWriter VMWriter::new $outputFileName]
     }
+
 
     method printTokens { } {
         # print while not end of file
@@ -38,7 +60,7 @@ itcl::class CompilerEngine2 {
             set token [ $tokenizer nextToken ]
             set types [ $tokenizer nextTokenType]
             # puts "token: $token, type: $types"
-            puts $outputFile "token: $token, type: $types"
+            # puts $outputFile "token: $token, type: $types"
             $tokenizer advance
         }
     }
@@ -53,7 +75,8 @@ itcl::class CompilerEngine2 {
     method eat { _token } {
         set realToken [$tokenizer nextToken]
         if { $realToken == $_token } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
 
             error "expected $_token, got $realToken"
@@ -63,7 +86,8 @@ itcl::class CompilerEngine2 {
     method eatType { } {
         # list of types
         if { [ $tokenizer nextToken ] == "int" || [ $tokenizer nextToken ] == "char" || [ $tokenizer nextToken ] == "boolean" || [ $tokenizer nextTokenType ] == "identifier" } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
             error "expected type, got [$tokenizer nextTokenType]"
         }
@@ -72,7 +96,8 @@ itcl::class CompilerEngine2 {
     method eatVarName { } {
         set type [ $tokenizer nextTokenType ]
         if { $type == "identifier" } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
             error "expected varName, got $type"
         }
@@ -80,7 +105,8 @@ itcl::class CompilerEngine2 {
 
     method twoOptionsEat { token1 token2 } {
         if { [ $tokenizer nextToken ] == $token1 || [ $tokenizer nextToken ] == $token2 } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
             error "expected $token1 or $token2, got [$tokenizer nextTokenType]"
         }
@@ -88,7 +114,8 @@ itcl::class CompilerEngine2 {
 
     method threeOptionsEat { token1 token2 token3 } {
         if { [ $tokenizer nextToken ] == $token1 || [ $tokenizer nextToken ] == $token2 || [ $tokenizer nextToken ] == $token3 } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
             error "expected $token1 or $token2 or $token3, got [$tokenizer nextTokenType]"
         }
@@ -96,7 +123,8 @@ itcl::class CompilerEngine2 {
 
     method eatUnaryOp { } {
         if { [ $tokenizer nextToken ] == "-" || [ $tokenizer nextToken ] == "~" } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
             error "expected unaryOp, got [$tokenizer nextTokenType]"
         }
@@ -104,7 +132,8 @@ itcl::class CompilerEngine2 {
 
     method eatOp { } {
         if { [ $tokenizer nextToken ] == "+" || [ $tokenizer nextToken ] == "-" || [ $tokenizer nextToken ] == "*" || [ $tokenizer nextToken ] == "/" || [ $tokenizer nextToken ] == "\&amp;" || [ $tokenizer nextToken ] == "|" || [ $tokenizer nextToken ] == "\&lt;" || [ $tokenizer nextToken ] == "\&gt;" || [ $tokenizer nextToken ] == "=" } {
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         } else {
             error "expected op, got [$tokenizer nextToken]"
         }
@@ -112,7 +141,7 @@ itcl::class CompilerEngine2 {
 
     method compileStatements { } {
         # compile statements, of the form: "statement*"
-        puts $outputFile "<statements>"
+        # puts $outputFile "<statements>"
         while { [ $tokenizer nextToken ] == "let" || [ $tokenizer nextToken ] == "if" || [ $tokenizer nextToken ] == "while" || [ $tokenizer nextToken ] == "do" || [ $tokenizer nextToken ] == "return" } {
             switch [ $tokenizer nextToken ] {
                 "let" {
@@ -132,13 +161,13 @@ itcl::class CompilerEngine2 {
                 }
             }
         }
-        puts $outputFile "</statements>"
+        # puts $outputFile "</statements>"
 
     }
 
     method compileClass { } {
         # compile class, of the form: "class className { classVarDec* subroutineDec* }"
-        puts $outputFile "<class>"
+        # puts $outputFile "<class>"
 
         eat "class"
         $st setCategory [$st addSymbolWithName [$tokenizer nextToken]] "class"
@@ -156,14 +185,14 @@ itcl::class CompilerEngine2 {
             puts [concat "subroutines table: \n" [$st_sr allSymbols] ]
         }
         eat "}"
-        puts $outputFile "</class>"
+        # puts $outputFile "</class>"
     }
 
     method compileClassVarDec { } {
         # (1) get category
         set category [$tokenizer nextToken]
         #compile class variable declaration, of the form: "static|field type varName (, varName)*;"
-        puts $outputFile "<classVarDec>"
+        # puts $outputFile "<classVarDec>"
         twoOptionsEat "static" "field" ;
         
         # (2) get type
@@ -184,12 +213,12 @@ itcl::class CompilerEngine2 {
             eatVarName
         }
         eat ";"
-        puts $outputFile "</classVarDec>"
+        # puts $outputFile "</classVarDec>"
     }
 
     method compileSubroutineDec { } {
         #compile subroutine declaration, of the form: "constructor|function|method (void|type) subroutineName (parameterList) subroutineBody"
-        puts $outputFile "<subroutineDec>"
+        # puts $outputFile "<subroutineDec>"
         threeOptionsEat "constructor" "function" "method"
         if { [ $tokenizer nextToken ] == "void" } {
             eat "void"
@@ -206,12 +235,12 @@ itcl::class CompilerEngine2 {
         compileParameterList
         eat ")"
         compileSubroutineBody
-        puts $outputFile "</subroutineDec>"
+        # puts $outputFile "</subroutineDec>"
     }
 
     method compileParameterList { } {
         # compile parameter list, of the form: "( (type varName) (, type varName)*)?"
-        puts $outputFile "<parameterList>"
+        # puts $outputFile "<parameterList>"
         if { [ $tokenizer nextToken ] == "int" || [ $tokenizer nextToken ] == "char" || [ $tokenizer nextToken ] == "boolean" || [ $tokenizer nextTokenType ] == "identifier" } {
             set type [$tokenizer nextToken]
             eatType
@@ -227,12 +256,12 @@ itcl::class CompilerEngine2 {
                 $st_sr setType [$st_sr setCategory [$st_sr addSymbolWithName $name] "arg"] $type ; #careful <- last one is st..
             }
         }
-        puts $outputFile "</parameterList>"
+        # puts $outputFile "</parameterList>"
     }
 
     method compileSubroutineBody { } {
         #compile subroutine body, of the form: "{ varDec* statements }"
-        puts $outputFile "<subroutineBody>"
+        # puts $outputFile "<subroutineBody>"
         # puts "$outputFileName"
         eat "{"
         #compile varDec*
@@ -242,12 +271,12 @@ itcl::class CompilerEngine2 {
         #compile statements
         compileStatements
         eat "}"
-        puts $outputFile "</subroutineBody>"
+        # puts $outputFile "</subroutineBody>"
     }
 
     method compileVarDec { } {
         #compile variable declaration, of the form: "var type varName (, varName)*;"
-        puts $outputFile "<varDec>"
+        # puts $outputFile "<varDec>"
         eat "var"
         set type [$tokenizer nextToken]
         eatType
@@ -261,12 +290,12 @@ itcl::class CompilerEngine2 {
             eatVarName
         }
         eat ";"
-        puts $outputFile "</varDec>"
+        # puts $outputFile "</varDec>"
     }
 
     method compileWhileStatement { } {
         # compile while statement, of the form: "while (expression) { statements }"
-        puts $outputFile "<whileStatement>"
+        # puts $outputFile "<whileStatement>"
         eat "while"
         eat "("
 
@@ -279,12 +308,12 @@ itcl::class CompilerEngine2 {
         compileStatements
         eat "}"
 
-        puts $outputFile "</whileStatement>"
+        # puts $outputFile "</whileStatement>"
     }
 
     method compileIfStatement { } {
         # compile if statement, of the form: "if (expression) { statements }"
-        puts $outputFile "<ifStatement>"
+        # puts $outputFile "<ifStatement>"
         eat "if"
         eat "("
 
@@ -305,13 +334,13 @@ itcl::class CompilerEngine2 {
             eat "}"
         }
 
-        puts $outputFile "</ifStatement>"
+        # puts $outputFile "</ifStatement>"
     }
 
 
     method compileLet { } {
         # compile let statement, of the form: "let varName ([ expression ])? = expression;"
-        puts $outputFile "<letStatement>"
+        # puts $outputFile "<letStatement>"
         eat "let"
         set name [$tokenizer nextToken] 
         
@@ -333,24 +362,24 @@ itcl::class CompilerEngine2 {
         compileExpression
         eat ";"
 
-        puts $outputFile "</letStatement>"
+        # puts $outputFile "</letStatement>"
     }
 
     method compileDo { } {
         # compile do statement, of the form: "do subroutineCall;"
-        puts $outputFile "<doStatement>"
+        # puts $outputFile "<doStatement>"
         eat "do"
 
         # compile subroutineCall
         compileSubroutineCall
         eat ";"
 
-        puts $outputFile "</doStatement>"
+        # puts $outputFile "</doStatement>"
     }
 
     method compileReturn { } {
         # compile return statement, of the form: "return expression?;"
-        puts $outputFile "<returnStatement>"
+        # puts $outputFile "<returnStatement>"
         eat "return"
 
         # compile expression?
@@ -359,12 +388,12 @@ itcl::class CompilerEngine2 {
         }
         eat ";"
 
-        puts $outputFile "</returnStatement>"
+        # puts $outputFile "</returnStatement>"
     }
 
     method compileExpression { } {
         # compile expression, of the form: "term (op term)*"
-        puts $outputFile "<expression>"
+        # puts $outputFile "<expression>"
         compileTerm
         set nextToken [ $tokenizer nextToken ]
         # puts "nextToken: $nextToken"
@@ -374,16 +403,16 @@ itcl::class CompilerEngine2 {
             compileTerm
             set nextToken [ $tokenizer nextToken ]
         }
-        puts $outputFile "</expression>"
+        # puts $outputFile "</expression>"
     }
 
     method compileTerm { } {
         # compile term, of the form: "integerConstant | stringConstant | keywordConstant | varName | varName[expression] | subroutineCall | (expression) | unaryOp term"
-        puts $outputFile "<term>"
+        # puts $outputFile "<term>"
         set type [ $tokenizer nextTokenType ]
         if { $type == "integerConstant" || $type == "stringConstant" || $type == "keywordConstant" } {
             set line [$tokenizer advance]
-            puts $outputFile $line
+            # puts $outputFile $line
         } elseif { $type == "identifier" } {
             if {[$st_sr addUsageUsed [$tokenizer nextToken]] == $RES_NOT_FOUND} {
                 #look it up on the class's symbol table!
@@ -417,10 +446,10 @@ itcl::class CompilerEngine2 {
                 compileTerm
             }
         } else {
-            ### might need to change this
-            puts $outputFile [$tokenizer advance]
+            # puts $outputFile 
+            $tokenizer advance
         }
-        puts $outputFile "</term>"
+        # puts $outputFile "</term>"
     }
 
     method compileSubroutineCall { } {
@@ -449,7 +478,7 @@ itcl::class CompilerEngine2 {
 
     method compileExpressionList { } {
         # compile expression list, of the form: "(expression (, expression)*)?"
-        puts $outputFile "<expressionList>"
+        # puts $outputFile "<expressionList>"
         if { [ $tokenizer nextToken ] != ")" } {
             compileExpression
             while { [ $tokenizer nextToken ] == "," } {
@@ -457,7 +486,7 @@ itcl::class CompilerEngine2 {
                 compileExpression
             }
         }
-        puts $outputFile "</expressionList>"
+        # puts $outputFile "</expressionList>"
     }
 
 }
