@@ -11,7 +11,6 @@ itcl::class VMWriter {
         # add the .vm extension
         append outputFileName ".vm"
         set outputFile [open $outputFileName w]
-        puts $outputFile "try"
     }
 
     # destructor {

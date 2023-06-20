@@ -75,6 +75,25 @@ itcl::class TokenizerHelper {
         return $token
     }
 
+    method nextNextToken { } {
+                # receives a line and returns the type of the line
+        # returns: keyword, symbol, identifier, int_const, string_const
+        variable fileReader
+
+        #save current position
+        set currentPosition [tell $fileReader]
+        gets $fileReader
+        set line [gets $fileReader]
+
+        set wordList [split $line " "]
+        set token [lindex $wordList 1]
+
+        #return to previous position
+        seek $fileReader $currentPosition
+
+        return $token
+    }
+
     method hasMoreTokens {} {
         #check if end of file
         variable fileReader

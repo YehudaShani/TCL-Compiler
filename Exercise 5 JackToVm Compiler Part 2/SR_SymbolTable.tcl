@@ -95,6 +95,10 @@ itcl::class SR_SymbolTable {
         return [expr $argCounter - 1] ; # because we always send "this" as an arg..
     }
 
+    method getNumLocals { } {
+        return $localCounter
+    }
+
     method getName { index } {
         return [getVal [lindex $symbolList $index] "|NAME" "|CATEGORY"]
     }

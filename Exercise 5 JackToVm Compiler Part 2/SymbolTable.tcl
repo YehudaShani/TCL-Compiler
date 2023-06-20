@@ -95,6 +95,10 @@ itcl::class SymbolTable {
         return [expr $argCounter - 1] ; # because we always send "this" as an arg..
     }
 
+    method getNumLocals { } {
+        return $localCounter
+    }
+
     method getName { index } {
         return [getVal [lindex $symbolList $index] "|NAME" "|CATEGORY"]
     }
@@ -129,6 +133,7 @@ itcl::class SymbolTable {
         if { $newVal == "local" } {
             setIndex $index $localCounter
             incr localCounter
+            puts "##################localCounter: $localCounter"
         }
         if { $newVal == "arg" } {
             setIndex $index $argCounter

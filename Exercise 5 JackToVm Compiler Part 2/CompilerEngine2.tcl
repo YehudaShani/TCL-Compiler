@@ -170,6 +170,7 @@ itcl::class CompilerEngine2 {
 
         eat "class"
         $st setCategory [$st addSymbolWithName [$tokenizer nextToken]] "class"
+
     
         eatVarName
         eat "{"
@@ -217,6 +218,7 @@ itcl::class CompilerEngine2 {
     method compileSubroutineDec { } {
         #compile subroutine declaration, of the form: "constructor|function|method (void|type) subroutineName (parameterList) subroutineBody"
         threeOptionsEat "constructor" "function" "method"
+        set subRoutineType [$tokenizer nextToken]
         if { [ $tokenizer nextToken ] == "void" } {
             eat "void"
         } else {
@@ -234,8 +236,21 @@ itcl::class CompilerEngine2 {
         compileParameterList
         eat ")"
 
-        $vmWriter writeFunction "[$st getClassName].$subRoutineName" [$st_sr getNumArgs]
+        puts [concat "subroutine table: \n" [$st_sr allSymbols] ]
+
+        $vmWriter writeFunction "[$st getClassName].$subRoutineName" [$st_sr getNumLocals]
         compileSubroutineBody
+
+        # push the return value of the function onto the stack
+
+        if { $subRoutineType == "void" } {
+            $vmWriter writePush "constant" 0
+        } else {
+            $vmWriter writePush "constant" 1
+        }
+
+        $vmWriter writeReturn
+
     }
 
     method compileParameterList { } {
@@ -337,29 +352,67 @@ itcl::class CompilerEngine2 {
         # compile let statement, of the form: "let varName ([ expression ])? = expression;"
         # puts $outputFile "<letStatement>"
         eat "let"
-        set name [$tokenizer nextToken] 
-        
+
+        # compile varName
+        set varName [$tokenizer nextToken]
         eatVarName
+
         # compile ([ expression ])? = expression
         if { [ $tokenizer nextToken ] == "\[" } {
-            if {[$st_sr addUsageUsed $name] == $RES_NOT_FOUND} {
-                #look it up on the class's symbol table!
-            }
             eat "\["
+            # compile expression
             compileExpression
-            eat "\]"
+            eat "]"
+
+            # push the base address of the array onto the stack
+            $vmWriter writePush [$st getCategory [$st getIndexOfSymbolByName $varName]] [$st getIndexOfSymbolByName $varName]
+
+            # add the expression to the base address
+            $vmWriter writeArithmetic "add"
+
+            eat "="
+
+            # compile expression
+            compileExpression
+
+            # pop the result of the expression into temp 0
+            $vmWriter writePop "temp" 0
+
+            # pop the result of the expression into that address
+            $vmWriter writePop "pointer" 1
+            $vmWriter writePush "temp" 0
+            $vmWriter writePop "that" 0
         } else {
-            if {[$st_sr addUsageDecl $name] == $RES_NOT_FOUND} {
-                #look it up on the class's symbol table!
+            eat "="
+
+            # compile expression
+            compileExpression
+
+            # pop the result of the expression into the variable
+            # search for the variable in the symbol table
+
+            set found true
+            if {[$st_sr getIndexOfSymbolByName $varName] >= 0} {
+                #look it up on the subrountine's symbol table:
+                set category [$st_sr getCategory [$st_sr getIndexOfSymbolByName $varName]]
+                set index [$st_sr getIndex [$st_sr getIndexOfSymbolByName $varName]]
+            } elseif {[$st getIndexOfSymbolByName $varName] >= 0} { ;# if found on the class's symbol table...
+                set category [$st getCategory [$st getIndexOfSymbolByName $varName]]
+                set index [$st getIndex [$st getIndexOfSymbolByName $varName]]
+            } else {
+                set found false
+            }
+            if { $found } {
+                $vmWriter writePop $category $index
+            } else {
+                puts "ERROR: variable $varName not found"
             }
         }
-        eat "="
-        compileExpression
+
         eat ";"
 
         # puts $outputFile "</letStatement>"
     }
-
     method compileDo { } {
         # compile do statement, of the form: "do subroutineCall;"
         # puts $outputFile "<doStatement>"
@@ -370,6 +423,9 @@ itcl::class CompilerEngine2 {
         eat ";"
 
         # puts $outputFile "</doStatement>"
+
+        # pop the return value of the subroutine call
+        $vmWriter writePop "temp" 0
     }
 
     method compileReturn { } {
@@ -390,6 +446,8 @@ itcl::class CompilerEngine2 {
         # compile expression, of the form: "term (op term)*"
         compileTerm
 
+        set nextType [ $tokenizer nextTokenType ]
+
         set nextToken [ $tokenizer nextToken ]
         # puts "nextToken: $nextToken"
         while { $nextToken == "+" || $nextToken == "-" || $nextToken == "*" || $nextToken == "/" || $nextToken == "\&amp;" || $nextToken == "|" || $nextToken == "\&lt;" || $nextToken == "\&gt;" || $nextToken == "=" } {
@@ -406,7 +464,11 @@ itcl::class CompilerEngine2 {
         # compile term, of the form: "integerConstant | stringConstant | keywordConstant | varName | varName[expression] | subroutineCall | (expression) | unaryOp term"
         
         set type [ $tokenizer nextTokenType ]
-        if { $type == "integerConstant" || $type == "stringConstant" || $type == "keywordConstant" } {
+        set 2ndToken [ $tokenizer nextNextToken ]
+        if { $2ndToken == "." } {
+            puts "subroutine call"
+            compileSubroutineCall
+        } elseif { $type == "integerConstant" || $type == "stringConstant" || $type == "keyword" } {
             $vmWriter writePush $CONSTANT [$tokenizer nextToken]
             $tokenizer advance
 
@@ -454,13 +516,20 @@ itcl::class CompilerEngine2 {
                 compileExpression
                 eat ")"
             } else {
+                set unaryOp [$tokenizer nextToken]
                 eatUnaryOp
                 compileTerm
+                if { $unaryOp == "-" } {
+                    $vmWriter writeArithmetic "neg"
+                } elseif { $unaryOp == "~" } {
+                    $vmWriter writeArithmetic "not"
+                }
+                
             }
         } else {
-            # puts $outputFile 
-            $tokenizer advance
+            puts "ERROR: invalid term, got $type"
         }
+        
         
     }
 
